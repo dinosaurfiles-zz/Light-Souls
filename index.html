@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MP2 Malumay, Sodusta</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="lib/quintus.js"></script>
+    <script src="lib/quintus_sprites.js"></script>
+    <script src="lib/quintus_scenes.js"></script>
+    <script src="lib/quintus_input.js"></script>
+    <script src="lib/quintus_anim.js"></script>
+    <script src="lib/quintus_2d.js"></script>
+    <script src="lib/quintus_touch.js"></script>
+    <script src="lib/quintus_ui.js"></script>
+</head>
+
+<body style="background-color: black;">
+    <script>
+        var Q = Quintus()
+            .include("Sprites, Scenes, Input, 2D, Touch, UI")
+            .setup({
+                width: 960,
+                height: 640,
+                development: true
+            }).controls().touch();
+
+        //Player Object
+        Q.Sprite.extend("Player", {
+            init: function(p) {
+                this._super(p, {
+                    asset: "player.png",
+                    x: 110,
+                    y: 50,
+                    jumpSpeed: -400
+                });
+                this.add("2d, platformerControls");
+            },
+
+            step: function(dt) {
+                //Flip character sprite when going right or left
+                if (Q.inputs["left"] && this.p.direction == "right") {
+                    this.p.flip = "x";
+                }
+                if (Q.inputs["right"] && this.p.direction == "left") {
+                    this.p.flip = false;
+                }
+            }
+        });
+
+        //EnmySuperClass
+        Q.component("enemySuperClass", {
+            added: function() {
+                var entity = this.entity;
+                entity.on("bump.left,bump.right,bump.bottom", function(collision) {
+                    if (collision.obj.isA("Player")) {
+                        Q.stageScene("endGame", 1, {
+                            label: "Game Over"
+                        });
+                        collision.obj.destroy();
+                    }
+                });
+                entity.on("bump.top", function(collision) {
+                    if (collision.obj.isA("Player")) {
+
+                        //Bump Player when enemy is killed
+                        collision.obj.p.vy = -100;
+
+                        //Kill this
+                        this.destroy();
+                    }
+                });
+            }
+        });
+
+    </script>
+</body>
+
+</html>
