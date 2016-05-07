@@ -16,11 +16,12 @@
 
 <body style="background-color: black;">
     <script>
+        var fireb = true;
         var Q = Quintus()
             .include("Sprites, Scenes, Input, 2D, Touch, UI")
             .setup({
-                width      : 960,
-                height     : 640,
+                width: 960,
+                height: 640,
                 development: true
             }).controls().touch();
 
@@ -28,43 +29,59 @@
         Q.Sprite.extend("Player", {
             init: function(p) {
                 this._super(p, {
-                    asset: "player.png",
-                    x          : 110,
-                    y          : 50,
-                    jumpSpeed  : -400,
-                    life       : 3,
+                    asset: "wizard.png",
+                    x: 410,
+                    y: 50,
+                    jumpSpeed: -540,
+                    life: 3,
                     currentAmmo: 5,
-                    hasKey     : false
+                    hasKey: false,
+                    gravity: 1
                 });
                 this.add("2d, platformerControls");
 
+                this.firebFunction = function() {
+                    fireb = true;
+                }
                 this.fire = function() {
-                    var tempX = 34;
-                    var tempVX = 1000;
-                    var tempFlip = false;
-                    if (this.p.direction == "left") {
-                        tempX = -34;
-                        tempVX = -1000;
-                        tempFlip = "x";
+                    if (fireb) {
+                        if (this.p.currentAmmo > 0) {
+
+                            var tempX = 36;
+                            var tempVX = 500;
+                            var tempFlip = false;
+                            if (this.p.direction == "left") {
+                                tempX = -36;
+                                tempVX = -500;
+                                tempFlip = "x";
+                            }
+                            var bull = window.bull = new Q.Bullet({
+                                w: 20,
+                                h: 20,
+                                x: this.p.x + tempX,
+                                y: this.p.y,
+                                vx: tempVX,
+                                gravity: 0,
+                                flip: tempFlip
+                            });
+                            Q.stage().insert(bull);
+                            fireb = false;
+                            this.p.currentAmmo--;
+                            setTimeout(this.firebFunction, 1000);
+                        }
                     }
-                    var bull = window.bull = new Q.Bullet({
-                        w: 20,
-                        h: 20,
-                        x: this.p.x + tempX,
-                        y: this.p.y,
-                        vx: tempVX,
-                        gravity: 0,
-                        flip: tempFlip
-                    });
-                    Q.stage().insert(bull);
+                    console.log(this.p.currentAmmo);
                 }
 
                 this.on("hit.sprite", function(collision) {
                     if (collision.obj.isA("Key")) {
                         collision.obj.destroy();
                         this.p.hasKey = true
-                    }else if (collision.obj.isA("Chest") && this.p.hasKey) {
+                    } else if (collision.obj.isA("Chest") && this.p.hasKey) {
                         console.log("Next Level1");
+                    } else if (collision.obj.isA("AmmoCrate")) {
+                        collision.obj.destroy();
+                        this.p.currentAmmo += 5;
                     }
                 });
 
@@ -85,7 +102,7 @@
         Q.MovingSprite.extend("Bullet", {
             init: function(p) {
                 this._super(p, {
-                    asset: "bullet.png",
+                    asset: "fireb.png",
                 });
                 this.add("2d");
                 this.gravity = 0;
@@ -93,6 +110,7 @@
             }
         });
 
+        /*
         Q.Sprite.extend("Chest", {
             init: function(p) {
                 this._super(p, {
@@ -109,6 +127,17 @@
                 this._super(p, {
                     asset: "key_red.png",
                     x: 350,
+                    y: 420,
+                });
+                this.add("2d");
+            }
+        });
+
+        Q.Sprite.extend("AmmoCrate", {
+            init: function(p) {
+                this._super(p, {
+                    asset: "ammocrate.png",
+                    x: 560,
                     y: 420,
                 });
                 this.add("2d");
@@ -199,9 +228,9 @@
             }
         });
 
+        */
         //@TODO make multiple levels
         Q.scene("level1", function(stage) {
-
             var background = new Q.TileLayer({
                 dataAsset: "origin.tmx",
                 layerIndex: 0,
@@ -222,9 +251,11 @@
             }));
 
             var player = stage.insert(new Q.Player());
-            var chest = stage.insert(new Q.Chest());
-            var key = stage.insert(new Q.Key());
+            //var chest = stage.insert(new Q.Chest());
+            //var key = stage.insert(new Q.Key());
+            //var ammocrate = stage.insert(new Q.AmmoCrate());
 
+            /*
             var levelAssets = [
                 ["GroundEnemy", {
                     x: 18 * 70,
@@ -245,6 +276,7 @@
             ];
 
             stage.loadAssets(levelAssets);
+            */
 
             stage.add("viewport").follow(player, {
                 x: true,
@@ -258,14 +290,44 @@
 
         });
 
+        /*
+        Q.scene("level2", function(stage) {
+            var background = new Q.TileLayer({
+                dataAsset: "level2.tmx",
+                layerIndex: 0,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_NONE
+            });
+            stage.insert(background);
+        });
+        */
+
         Q.scene("endGame", function(stage) {
             alert("game over");
             window.location = "";
         });
 
+        Q.input.on('action', function() {
+            Q.clearStage(1);
+            alert("Next Scene!");
+            Q.stageScene("level2");
+
+            /*
+            var level = Q.state.get("level");
+
+            if (level > 1) {
+                Q.stageScene('level' + (level - 1));
+            } else {
+                Q.stageScene('title');
+            }
+            */
+        });
+
         //load assets
-        Q.load("tiles_map.png, player.png, slime.png, fly.png, origin.tmx, bullet.png, lock_red.png, key_red.png", function() {
-            Q.sheet("tiles", "tiles_map.png", {
+        Q.load("tiles.png, origin.tmx, wizard.png, fireb.png", function() {
+            Q.sheet("tiles", "tiles.png", {
                 tilew: 70,
                 tileh: 70
             });
