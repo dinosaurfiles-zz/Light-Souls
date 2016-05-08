@@ -16,12 +16,20 @@
 
 <body style="background-color: black;">
     <script>
+        function multiplier(number, char) {
+            var text = "";
+            for (var i = 0; i < number; i++) {
+                text += char + " ";
+            }
+            return text;
+        }
+
         var fireb = true;
         var Q = Quintus()
             .include("Sprites, Scenes, Input, 2D, Touch, UI")
             .setup({
                 width: 960,
-                height: 640,
+                height: 680,
                 development: true
             }).controls().touch();
 
@@ -29,15 +37,15 @@
         Q.Sprite.extend("Player", {
             init: function(p) {
                 this._super(p, {
+                    x: 70,
+                    y: 420,
                     asset: "wizard.png",
-                    x: 410,
-                    y: 50,
                     jumpSpeed: -540,
                     life: 3,
                     currentAmmo: 5,
                     hasKey: false,
-                    gravity: 1
                 });
+
                 this.add("2d, platformerControls");
 
                 this.firebFunction = function() {
@@ -55,7 +63,7 @@
                                 tempVX = -500;
                                 tempFlip = "x";
                             }
-                            var bull = window.bull = new Q.Bullet({
+                            var bull = window.bull = new Q.Projectile({
                                 w: 20,
                                 h: 20,
                                 x: this.p.x + tempX,
@@ -64,29 +72,57 @@
                                 gravity: 0,
                                 flip: tempFlip
                             });
+
                             Q.stage().insert(bull);
+
                             fireb = false;
                             this.p.currentAmmo--;
+                            var powerLabel = Q("UI.Text", 1).items[2];
+                            powerLabel.p.label = 'Power: ' + multiplier(this.p.currentAmmo, "۞");
+
                             setTimeout(this.firebFunction, 1000);
                         }
                     }
-                    console.log(this.p.currentAmmo);
+
                 }
 
                 this.on("hit.sprite", function(collision) {
                     if (collision.obj.isA("Key")) {
                         collision.obj.destroy();
                         this.p.hasKey = true
+                        var keyLabel = Q("UI.Text", 1).items[3];
+                        keyLabel.p.label = 'Key: ✔️';
                     } else if (collision.obj.isA("Chest") && this.p.hasKey) {
-                        console.log("Next Level1");
-                    } else if (collision.obj.isA("AmmoCrate")) {
+                        Q.stageScene("level1")
+                    } else if (collision.obj.isA("Orb")) {
                         collision.obj.destroy();
                         this.p.currentAmmo += 5;
+                        var powerLabel = Q("UI.Text", 1).items[2];
+                        powerLabel.p.label = 'Power: ' + multiplier(this.p.currentAmmo, "۞");
+                    } else if (collision.obj.isA("Potion")) {
+                        collision.obj.destroy();
+                        this.p.life += 1;
+                        var lifeLabel = Q("UI.Text", 1).items[1];
+                        lifeLabel.p.label = 'Life: ' + multiplier(this.p.life, "❤️‍");
                     }
                 });
 
                 Q.input.on("fire", this, "fire");
 
+            },
+            damage: function() {
+                //only damage if not in "invincible" mode, otherwise beign next to an enemy takes all the lives inmediatly
+                this.p.life--;
+                var lifeLabel = Q("UI.Text", 1).items[1];
+                lifeLabel.p.label = 'Life: ' + multiplier(this.p.life, "‍❤️‍");
+
+                console.log(this.p.life);
+                if (this.p.life <= 0) {
+                    this.destroy();
+                    Q.stageScene("endGame", 1, {
+                        label: "Game Over"
+                    });
+                }
             },
             step: function(dt) {
                 if (Q.inputs["left"] && this.p.direction == "right") {
@@ -98,25 +134,24 @@
             }
         });
 
-        //Bullet
-        Q.MovingSprite.extend("Bullet", {
+        //Projectile Object
+        Q.MovingSprite.extend("Projectile", {
             init: function(p) {
                 this._super(p, {
                     asset: "fireb.png",
                 });
                 this.add("2d");
+
+                //This will make the Projectile travel in a horizontal line
                 this.gravity = 0;
                 this.on("hit", this.destroy);
             }
         });
 
-        /*
         Q.Sprite.extend("Chest", {
             init: function(p) {
                 this._super(p, {
-                    asset: "lock_red.png",
-                    x: 490,
-                    y: 420,
+                    asset: "chest.png"
                 });
                 this.add("2d");
             }
@@ -125,25 +160,31 @@
         Q.Sprite.extend("Key", {
             init: function(p) {
                 this._super(p, {
-                    asset: "key_red.png",
-                    x: 350,
-                    y: 420,
+                    asset: "key.png"
                 });
                 this.add("2d");
             }
         });
 
-        Q.Sprite.extend("AmmoCrate", {
+        Q.Sprite.extend("Orb", {
             init: function(p) {
                 this._super(p, {
-                    asset: "ammocrate.png",
-                    x: 560,
-                    y: 420,
+                    asset: "orb.png",
                 });
                 this.add("2d");
             }
         });
 
+        Q.Sprite.extend("Potion", {
+            init: function(p) {
+                this._super(p, {
+                    asset: "potion.png",
+                });
+                this.add("2d");
+            }
+        });
+
+        //Enemy Super Class Object
         Q.component("enemySuperClass", {
             added: function() {
                 var entity = this.entity;
@@ -151,30 +192,30 @@
                 //Damage Player
                 entity.on("bump.left,bump.right,bump.bottom", function(collision) {
                     if (collision.obj.isA("Player")) {
-                        console.log("dead");
+                        collision.obj.damage();
                     }
                 });
 
-                //Destroy if jumped on top
+                //Destroy enemy if jumped on top
                 entity.on("bump.top", function(collision) {
                     if (collision.obj.isA("Player")) {
+
                         //make the player jump
                         collision.obj.p.vy = -100;
                         this.destroy();
                     }
                 });
 
-                //Destroy of hitted by a Bullet
+                //Destroy if hitted by a Projectile
                 entity.on("hit", function(collision) {
-                    if (collision.obj.isA("Bullet")) {
+                    if (collision.obj.isA("Projectile")) {
                         this.destroy();
                     }
                 });
             },
-
         });
 
-
+        //GroundEnemy Object
         Q.Sprite.extend("GroundEnemy", {
             init: function(p) {
                 this._super(p, {
@@ -188,7 +229,7 @@
                 var ground = Q.stage().locate(this.p.x, this.p.y + this.p.h / 2 + 1, Q.SPRITE_DEFAULT);
                 var nextTile = Q.stage().locate(this.p.x + dirX * this.p.w / 2 + dirX, this.p.y + this.p.h / 2 + 1, Q.SPRITE_DEFAULT);
 
-                //if we are on ground and there is a cliff
+                //Check if there's a ground on the next tile
                 if (!nextTile && ground) {
                     if (this.p.vx > 0) {
                         if (this.p.defaultDirection == "right") {
@@ -208,6 +249,7 @@
             }
         });
 
+        //FlyingEnemy Object
         Q.Sprite.extend("FlyingEnemy", {
             init: function(p) {
                 this._super(p, {
@@ -228,9 +270,10 @@
             }
         });
 
-        */
+        var universalPlayer;
+
         //@TODO make multiple levels
-        Q.scene("level1", function(stage) {
+        Q.scene("origin", function(stage) {
             var background = new Q.TileLayer({
                 dataAsset: "origin.tmx",
                 layerIndex: 0,
@@ -239,6 +282,7 @@
                 tileH: 70,
                 type: Q.SPRITE_NONE
             });
+
             stage.insert(background);
 
             stage.collisionLayer(new Q.TileLayer({
@@ -251,32 +295,34 @@
             }));
 
             var player = stage.insert(new Q.Player());
-            //var chest = stage.insert(new Q.Chest());
-            //var key = stage.insert(new Q.Key());
-            //var ammocrate = stage.insert(new Q.AmmoCrate());
 
-            /*
+            universalPlayer = player;
+
             var levelAssets = [
-                ["GroundEnemy", {
-                    x: 18 * 70,
-                    y: 6 * 70,
-                    asset: "slime.png"
+                ["Orb", {
+                    x: 350,
+                    y: 70
+                }],
+                ["Potion", {
+                    x: 7 * 70,
+                    y: 1 * 70
+                }],
+                ["Key", {
+                    x: 9 * 70,
+                    y: 1 * 70
+                }],
+                ["Chest", {
+                    x: 11 * 70,
+                    y: 1 * 70
                 }],
                 ["GroundEnemy", {
-                    x: 14 * 70,
-                    y: 6 * 70,
-                    asset: "slime.png"
+                    x: 15 * 70,
+                    y: 1 * 70,
+                    asset: "groundenemy.png"
                 }],
-                ["FlyingEnemy", {
-                    x: 800,
-                    y: 350,
-                    rangeY: 70,
-                    asset: "fly.png"
-                }]
             ];
 
             stage.loadAssets(levelAssets);
-            */
 
             stage.add("viewport").follow(player, {
                 x: true,
@@ -287,22 +333,47 @@
                 minY: 0,
                 maxY: background.p.h
             });
-
         });
 
-        /*
-        Q.scene("level2", function(stage) {
+        Q.scene("level1", function(stage) {
+            initializeStats();
+
             var background = new Q.TileLayer({
-                dataAsset: "level2.tmx",
+                dataAsset: "level1.tmx",
                 layerIndex: 0,
                 sheet: "tiles",
                 tileW: 70,
                 tileH: 70,
                 type: Q.SPRITE_NONE
             });
+
             stage.insert(background);
+
+            stage.collisionLayer(new Q.TileLayer({
+                dataAsset: "level1.tmx",
+                layerIndex: 1,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_DEFAULT
+            }));
+
+            var player = stage.insert(new Q.Player());
+
+            var levelAssets = [];
+
+            stage.loadAssets(levelAssets);
+
+            stage.add("viewport").follow(player, {
+                x: true,
+                y: true
+            }, {
+                minX: 0,
+                maxX: background.p.w,
+                minY: 0,
+                maxY: background.p.h
+            });
         });
-        */
 
         Q.scene("endGame", function(stage) {
             alert("game over");
@@ -310,33 +381,76 @@
         });
 
         Q.input.on('action', function() {
-            Q.clearStage(1);
-            alert("Next Scene!");
-            Q.stageScene("level2");
-
-            /*
-            var level = Q.state.get("level");
-
-            if (level > 1) {
-                Q.stageScene('level' + (level - 1));
-            } else {
-                Q.stageScene('title');
-            }
-            */
+            Q.stageScene("level1")
         });
 
-        //load assets
-        Q.load("tiles.png, origin.tmx, wizard.png, fireb.png", function() {
+        Q.scene("gameStats", function(stage) {
+            var statsContainer = stage.insert(new Q.UI.Container({
+                fill: "gray",
+                x: 960 / 2,
+                y: 655,
+                border: 1,
+                shadow: 3,
+                shadowColor: "rgba(0,0,0,0.5)",
+                w: 960,
+                h: 40
+            }));
+
+            var level = stage.insert(new Q.UI.Text({
+                label: "Level: 1",
+                color: "white",
+                x: -400,
+                y: 0
+            }), statsContainer);
+
+            var life = stage.insert(new Q.UI.Text({
+                label: "Life: ❤️‍ ❤️ ‍❤️‍",
+                color: "white",
+                x: -240,
+                y: 0
+            }), statsContainer);
+
+            var power = stage.insert(new Q.UI.Text({
+                label: "Power: ۞ ۞ ۞‍ ۞‍ ۞‍ ۞‍ ۞‍ ۞‍ ۞‍ ۞‍",
+                color: "white",
+                x: 20,
+                y: 0
+            }), statsContainer);
+
+            var key = stage.insert(new Q.UI.Text({
+                label: "Key: ✔️",
+                color: "white",
+                x: 260,
+                y: 0
+            }), statsContainer);
+
+            var life = stage.insert(new Q.UI.Text({
+                label: "Time: 00:00",
+                color: "white",
+                x: 380,
+                y: 0
+            }), statsContainer);
+        });
+
+        function initializeStats() {
+            var lifeLabel = Q("UI.Text", 1).items[1];
+            lifeLabel.p.label = 'Life: ' + multiplier(universalPlayer.p.life, "‍❤️‍");
+            var powerLabel = Q("UI.Text", 1).items[2];
+            powerLabel.p.label = 'Power: ' + multiplier(universalPlayer.p.currentAmmo, "‍۞");
+            var keyLabel = Q("UI.Text", 1).items[3];
+            keyLabel.p.label = 'Key: ' + multiplier(universalPlayer.p.hasKey, "‍");
+        }
+
+        //Load all assets plus initial level
+        Q.load("tiles.png, origin.tmx, level1.tmx, wizard.png, fireb.png, orb.png, potion.png, key.png, chest.png, groundenemy.png, flyingenemy.png", function() {
             Q.sheet("tiles", "tiles.png", {
                 tilew: 70,
                 tileh: 70
             });
-            Q.stageScene("level1");
+            Q.stageScene("origin");
+            Q.stageScene("gameStats", 1);
+            initializeStats();
         });
-
-        function test() {
-            console.log("test");
-        }
     </script>
 </body>
 
