@@ -25,6 +25,7 @@
         }
 
         var fireb = true;
+        var damageC = true;
         var Q = Quintus()
             .include("Sprites, Scenes, Input, 2D, Touch, UI")
             .setup({
@@ -86,6 +87,7 @@
 
                 }
 
+                //Collision parameters
                 this.on("hit.sprite", function(collision) {
                     if (collision.obj.isA("Key")) {
                         collision.obj.destroy();
@@ -93,7 +95,8 @@
                         var keyLabel = Q("UI.Text", 1).items[3];
                         keyLabel.p.label = 'Key: ✔️';
                     } else if (collision.obj.isA("Chest") && this.p.hasKey) {
-                        Q.stageScene("level1")
+                        Q.stageScene("level1");
+                        // TODO: Add Scene Selection if level complete
                     } else if (collision.obj.isA("Orb")) {
                         collision.obj.destroy();
                         this.p.currentAmmo += 5;
@@ -111,17 +114,25 @@
 
             },
             damage: function() {
-                //only damage if not in "invincible" mode, otherwise beign next to an enemy takes all the lives inmediatly
-                this.p.life--;
-                var lifeLabel = Q("UI.Text", 1).items[1];
-                lifeLabel.p.label = 'Life: ' + multiplier(this.p.life, "‍❤️‍");
+                this.damageCFunction = function() {
+                        damageC = true;
+                    }
+                    //only damage if not in "invincible" mode, otherwise beign next to an enemy takes all the lives inmediatly
 
-                console.log(this.p.life);
-                if (this.p.life <= 0) {
-                    this.destroy();
-                    Q.stageScene("endGame", 1, {
-                        label: "Game Over"
-                    });
+                if (damageC) {
+                    damageC = false;
+                    this.p.life--;
+                    var lifeLabel = Q("UI.Text", 1).items[1];
+                    lifeLabel.p.label = 'Life: ' + multiplier(this.p.life, "‍❤️‍");
+
+                    console.log(this.p.life);
+                    if (this.p.life <= 0) {
+                        this.destroy();
+                        Q.stageScene("endGame", 1, {
+                            label: "Game Over"
+                        });
+                    }
+                    setTimeout(this.damageCFunction, 250);
                 }
             },
             step: function(dt) {
@@ -360,7 +371,592 @@
 
             var player = stage.insert(new Q.Player());
 
-            var levelAssets = [];
+            var levelAssets = [
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 25 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 30 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 34 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 28 * 70,
+                    y: 5 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 31 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 8 * 70,
+                    y: 7 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["Key", {
+                    x: 18.5 * 70,
+                    y: 1 * 70,
+                    asset: "key.png"
+                }],
+                ["Chest", {
+                    x: 39 * 70,
+                    y: 1 * 70,
+                    asset: "chest.png"
+                }]
+            ];
+
+            stage.loadAssets(levelAssets);
+
+            stage.add("viewport").follow(player, {
+                x: true,
+                y: true
+            }, {
+                minX: 0,
+                maxX: background.p.w,
+                minY: 0,
+                maxY: background.p.h
+            });
+        });
+
+        Q.scene("level1", function(stage) {
+            initializeStats();
+
+            var background = new Q.TileLayer({
+                dataAsset: "level1.tmx",
+                layerIndex: 0,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_NONE
+            });
+
+            stage.insert(background);
+
+            stage.collisionLayer(new Q.TileLayer({
+                dataAsset: "level1.tmx",
+                layerIndex: 1,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_DEFAULT
+            }));
+
+            var player = stage.insert(new Q.Player());
+
+            var levelAssets = [
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 25 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 30 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 34 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 28 * 70,
+                    y: 5 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 31 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 8 * 70,
+                    y: 7 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["Key", {
+                    x: 18.5 * 70,
+                    y: 1 * 70,
+                    asset: "key.png"
+                }],
+                ["Chest", {
+                    x: 39 * 70,
+                    y: 1 * 70,
+                    asset: "chest.png"
+                }]
+            ];
+
+            stage.loadAssets(levelAssets);
+
+            stage.add("viewport").follow(player, {
+                x: true,
+                y: true
+            }, {
+                minX: 0,
+                maxX: background.p.w,
+                minY: 0,
+                maxY: background.p.h
+            });
+        });
+
+        Q.scene("level2", function(stage) {
+            initializeStats();
+
+            var background = new Q.TileLayer({
+                dataAsset: "level2.tmx",
+                layerIndex: 0,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_NONE
+            });
+
+            stage.insert(background);
+
+            stage.collisionLayer(new Q.TileLayer({
+                dataAsset: "level2.tmx",
+                layerIndex: 1,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_DEFAULT
+            }));
+
+            var player = stage.insert(new Q.Player());
+
+            var levelAssets = [
+                ["GroundEnemy", {
+                    x: 6 * 70,
+                    y: 13 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 14 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 19 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 25 * 70,
+                    y: 13 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 29 * 70,
+                    y: 12 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 34 * 70,
+                    y: 12 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 34 * 70,
+                    y: 7 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 36 * 70,
+                    y: 7 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 25 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 31 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 27 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 32 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 18 * 70,
+                    y: 1 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 26 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 28 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 30 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 35 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 19 * 70,
+                    y: 5 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 13 * 70,
+                    y: 2 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 25 * 70,
+                    y: 12 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 26 * 70,
+                    y: 11 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["Orb", {
+                    x: 31.5 * 70,
+                    y: 10 * 70,
+                    asset: "orb.png"
+                }],
+                ["Orb", {
+                    x: 12.5 * 70,
+                    y: 12 * 70,
+                    asset: "orb.png"
+                }],
+                ["Orb", {
+                    x: 38.5 * 70,
+                    y: 2 * 70,
+                    asset: "orb.png"
+                }],
+                ["Key", {
+                    x: 1.5 * 70,
+                    y: 2 * 70,
+                    asset: "key.png"
+                }],
+                ["Chest", {
+                    x: 38 * 70,
+                    y: 3 * 70,
+                    asset: "chest.png"
+                }]
+            ];
+
+            stage.loadAssets(levelAssets);
+
+            stage.add("viewport").follow(player, {
+                x: true,
+                y: true
+            }, {
+                minX: 0,
+                maxX: background.p.w,
+                minY: 0,
+                maxY: background.p.h
+            });
+        });
+
+        Q.scene("level3", function(stage) {
+            initializeStats();
+
+            var background = new Q.TileLayer({
+                dataAsset: "level3.tmx",
+                layerIndex: 0,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_NONE
+            });
+
+            stage.insert(background);
+
+            stage.collisionLayer(new Q.TileLayer({
+                dataAsset: "level3.tmx",
+                layerIndex: 1,
+                sheet: "tiles",
+                tileW: 70,
+                tileH: 70,
+                type: Q.SPRITE_DEFAULT
+            }));
+
+            var player = stage.insert(new Q.Player());
+
+            var levelAssets = [
+                ["GroundEnemy", {
+                    x: 11 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 13 * 70,
+                    y: 1 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 12 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 14 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 18 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 36 * 70,
+                    y: 7 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 25 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 31 * 70,
+                    y: 8 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 27 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 32 * 70,
+                    y: 6 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 18 * 70,
+                    y: 1 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 26 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 28 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 30 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 35 * 70,
+                    y: 3 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 10 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 12 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 14 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 11 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 1 * 70,
+                    y: 22 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 10 * 70,
+                    y: 21 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 20 * 70,
+                    y: 20 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 22 * 70,
+                    y: 19 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 2 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 4 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 6 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 8 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 3 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 5 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 7 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 9 * 70,
+                    y: 28 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 14 * 70,
+                    y: 15 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["GroundEnemy", {
+                    x: 16 * 70,
+                    y: 15 * 70,
+                    asset: "groundenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 19 * 70,
+                    y: 15 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 21 * 70,
+                    y: 16 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 3 * 70,
+                    y: 27 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 20 * 70,
+                    y: 24 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["FlyingEnemy", {
+                    x: 22 * 70,
+                    y: 24 * 70,
+                    rangeY: .5 * 70,
+                    asset: "flyingenemy.png"
+                }],
+                ["Orb", {
+                    x: 23.5 * 70,
+                    y: 26 * 70,
+                    asset: "orb.png"
+                }],
+                ["Orb", {
+                    x: 9.5 * 70,
+                    y: 3 * 70,
+                    asset: "orb.png"
+                }],
+                ["Key", {
+                    x: 4.5 * 70,
+                    y: 1 * 70,
+                    asset: "key.png"
+                }],
+                ["Chest", {
+                    x: 24 * 70,
+                    y: 3 * 70,
+                    asset: "chest.png"
+                }]
+            ];
 
             stage.loadAssets(levelAssets);
 
@@ -381,7 +977,7 @@
         });
 
         Q.input.on('action', function() {
-            Q.stageScene("level1")
+            Q.stageScene("level1");
         });
 
         Q.scene("gameStats", function(stage) {
@@ -423,13 +1019,6 @@
                 x: 260,
                 y: 0
             }), statsContainer);
-
-            var life = stage.insert(new Q.UI.Text({
-                label: "Time: 00:00",
-                color: "white",
-                x: 380,
-                y: 0
-            }), statsContainer);
         });
 
         function initializeStats() {
@@ -442,7 +1031,7 @@
         }
 
         //Load all assets plus initial level
-        Q.load("tiles.png, origin.tmx, level1.tmx, wizard.png, fireb.png, orb.png, potion.png, key.png, chest.png, groundenemy.png, flyingenemy.png", function() {
+        Q.load("tiles.png, origin.tmx, level1.tmx, level2.tmx, level3.tmx, wizard.png, fireb.png, orb.png, potion.png, key.png, chest.png, groundenemy.png, flyingenemy.png", function() {
             Q.sheet("tiles", "tiles.png", {
                 tilew: 70,
                 tileh: 70
