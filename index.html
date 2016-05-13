@@ -14,10 +14,15 @@
     <script src="lib/quintus_ui.js"></script>
     <script src="lib/light-souls.js"></script>
     <style>
+        body {
+            background-color: #161A19;
+        }
+
         .responsive-container {
             position: relative;
             width: 100%;
             border: 1px solid black;
+            z-index: -1;
         }
 
         .dummy {
@@ -72,7 +77,7 @@
         .modalDialog > div {
             width: 400px;
             position: relative;
-            margin: 10% auto;
+            margin: 2% auto;
             padding: 5px 20px 13px 20px;
             border-radius: 10px;
             background: #7EA475;
@@ -105,38 +110,55 @@
         .div-4 {
             width: 25%;
         }
+
+        .startGameOptions {
+            display: flex;
+            z-index: 1;
+            margin-top: 450px;
+        }
+
+        .optionButtons {
+            width: 200px;
+            height: 40px;
+            background-color: #7EA475;
+            border-radius: 2px;
+            text-align: center;
+            padding: 8px 5px 5px 5px;
+            font-size: x-large;
+            color: #161B19;
+        }
     </style>
 
     <script type="text/javascript">
-      function startGame(){
-        var content = document.getElementById('startContent');
-        content.style.display = "none";
-        var game = new Game();
-      }
+        function startGame() {
+            var content = document.getElementById('startContent');
+            content.style.display = "none";
+            var game = new Game();
+        }
     </script>
 </head>
 
-<body style="background-color: #161A19">
+<body>
     <div id="startContent">
-        <div class="responsive-container" style="z-index: -1">
+        <div class="responsive-container">
             <div class="img-container">
                 <img src="./images/startpage1.png" alt="" />
             </div>
         </div>
 
-        <div style="display: flex; z-index: 1; margin-top: 450px">
+        <div class="startGameOptions">
             <div class="div-4">
             </div>
             <div class="div-4">
                 <a href="#" onclick="startGame();">
-                    <div style="width: 200px; height: 40px; background-color: #7EA475; border-radius: 2px; text-align: center; padding: 8px 5px 5px 5px; font-size: x-large; color: #161B19">
+                    <div class="optionButtons">
                         Start Game
                     </div>
                 </a>
             </div>
             <div class="div-4">
                 <a href="#openModal">
-                    <div style="width: 200px; height: 40px; background-color: #7EA475; border-radius: 2px; text-align: center; padding: 8px 5px 5px 5px; font-size: x-large; float: right; color: #161B19;">
+                  <div class="optionButtons" style="float: right">
                         How to Play
                     </div>
                 </a>
@@ -150,11 +172,20 @@
                 <a href="#close" title="Close" class="close">
                 X
                 </a>
-                <h2>How to Play</h2>
-                <p>Use the arrow keys to control the wizard as you wish</p>
-                <p></p>
+                <h2>Instructions</h2>
+                <p>How to Play.</p>
+                <p>The Soul of a Wizard is under the mercy of your hands. Guide him through his journey to reach Nirvana or let him suffer to his eternal damnation. </br>Don't let your enemies touch you. </br>Potions will be provided along the way.
+                    </br> Each level will be locked and a key should be found before you can proceed to the next stage </br>
+                    *NOTE*</br>
+                    NEVER BELIEVE WHAT YOU SEE.
+                </p>
                 <p>
-                    TEST another test
+                    <img src="./images/arrowKeys.png"></img>
+                    </br> Venture throught the Three Labyrinths by using the Arrow Keys
+                    <br/>
+                    <img src="./images/Spacebar.png"></img>
+                    </br>Use spacebar to bring destruction</br>
+
                 </p>
             </div>
         </div>
